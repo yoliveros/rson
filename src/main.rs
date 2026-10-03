@@ -6,7 +6,7 @@ fn main() {
     if let Err(err) = run(&args) {
         match err {
             ParseError::MissingFilePath => eprintln!("Error: Missing file path."),
-            ParseError::Io(e) => eprintln!("File read error"),
+            ParseError::Io(e) => eprintln!("File read error: {e}"),
         }
         exit(1)
     }
