@@ -2,6 +2,8 @@ use error::ParseError;
 use lexer::Lexer;
 use std::{fs, path::Path};
 
+use crate::parser::Parser;
+
 mod ast;
 pub mod error;
 mod lexer;
@@ -12,7 +14,9 @@ pub fn run<A: AsRef<Path>>(args: &[A]) -> Result<(), ParseError> {
 
     let file = fs::read_to_string(path_arg).map_err(|err| ParseError::Io(err))?;
 
-    let _lx = Lexer::new(&file);
+    let lx = Lexer::new(&file);
+
+    let json_value = Parser::new(lx);
 
     Ok(())
 }

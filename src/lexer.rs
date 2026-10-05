@@ -5,15 +5,15 @@ pub struct Lexer<'a> {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum Token<'a> {
+pub enum Token {
     LBrace,
     RBrace,
     LBracket,
     RBracket,
     Comma,
     Colon,
-    String(&'a str),
-    Number(&'a str),
+    String(String),
+    Number(f64),
     True,
     False,
     Null,
@@ -28,15 +28,63 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn string_token(&mut self) -> Token<'a> {
-        Token::String("siu")
+    fn string_token(&mut self) -> Token {
+        let mut word = String::new();
+
+        loop {
+            match self.chars.peek() {
+                Some(&'"') => {
+                    self.chars.next();
+                    break;
+                }
+                None => return Token::Illegal('"'),
+                Some(&'\\') => {
+                    self.chars.next();
+                    if let Some(esc_ch) = self.chars.next() {
+                        match esc_ch {
+                            '"' => word.push('"'),
+                            '\\' => word.push('\\'),
+                            'n' => word.push('\n'),
+                            't' => word.push('\t'),
+                            'r' => word.push('\r'),
+                            o => word.push(o),
+                        }
+                    }
+                }
+                Some(&c) => {
+                    self.chars.next();
+                    word.push(c);
+                }
+            }
+        }
+
+        Token::String(word)
     }
 
-    fn number_token(&mut self) -> Token<'a> {
-        Token::Number("12345")
+    fn number_token(&mut self) -> Token {
+        let mut word = String::new();
+
+        while let Some(&next_ch) = self.chars.peek() {
+            if next_ch.is_numeric()
+                || next_ch == '.'
+                || next_ch == 'e'
+                || next_ch == 'E'
+                || next_ch == '-'
+                || next_ch == '+'
+            {
+                self.chars.next();
+                word.push(next_ch);
+            } else {
+                break;
+            }
+        }
+
+        let real_number = word.parse().unwrap_or(0.0);
+
+        Token::Number(real_number)
     }
 
-    fn match_literal(&mut self, first_char: char) -> Token<'a> {
+    fn match_literal(&mut self, first_char: char) -> Token {
         let mut word = first_char.to_string();
 
         while let Some(&next_ch) = self.chars.peek() {
@@ -67,7 +115,7 @@ impl<'a> Lexer<'a> {
 }
 
 impl<'a> Iterator for Lexer<'a> {
-    type Item = Token<'a>;
+    type Item = Token;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.skip_white_space();
@@ -84,9 +132,12 @@ impl<'a> Iterator for Lexer<'a> {
             ']' => Token::RBracket,
             ':' => Token::Colon,
             ',' => Token::Comma,
-            '"' => self.string_token(),
-            't' | 'f' | 'n' => self.match_literal(ch),
+            '"' => {
+                self.chars.next();
+                self.string_token()
+            }
             '0'..='9' => self.number_token(),
+            't' | 'f' | 'n' => self.match_literal(ch),
             c => Token::Illegal(c),
         };
 
