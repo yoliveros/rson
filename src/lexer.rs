@@ -61,8 +61,8 @@ impl<'a> Lexer<'a> {
         Token::String(word)
     }
 
-    fn number_token(&mut self) -> Token {
-        let mut word = String::new();
+    fn number_token(&mut self, first_num: char) -> Token {
+        let mut word = first_num.to_string();
 
         while let Some(&next_ch) = self.chars.peek() {
             if next_ch.is_numeric()
@@ -132,11 +132,8 @@ impl<'a> Iterator for Lexer<'a> {
             ']' => Token::RBracket,
             ':' => Token::Colon,
             ',' => Token::Comma,
-            '"' => {
-                self.chars.next();
-                self.string_token()
-            }
-            '0'..='9' => self.number_token(),
+            '"' => self.string_token(),
+            '0'..='9' => self.number_token(ch),
             't' | 'f' | 'n' => self.match_literal(ch),
             c => Token::Illegal(c),
         };

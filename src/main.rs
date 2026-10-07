@@ -1,4 +1,4 @@
-use rson::{error::ParseError, run};
+use rson::run;
 use std::process::exit;
 
 fn main() {

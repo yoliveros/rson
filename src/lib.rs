@@ -14,10 +14,11 @@ pub fn run<A: AsRef<Path>>(args: &[A]) -> Result<JsonValue, ParseError> {
 
     let file = fs::read_to_string(path_arg).map_err(|err| ParseError::Io(err))?;
 
-    let lx = Lexer::new(&file);
+    let lexer = Lexer::new(&file);
 
-    let json_value = Parser::new(lx);
+    let mut parser = Parser::new(lexer);
 
-    todo!()
-    // Ok(json_value)
+    let ast = parser.parse_program()?;
+
+    Ok(ast)
 }
